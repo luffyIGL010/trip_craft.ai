@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }} - Full-Stack Indian Travel Assistant</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked.js for Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- Canvas Confetti for Booking Celebrations -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .prose table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.875rem; }
+        .prose th { background-color: #f1f5f9; padding: 0.6rem 0.8rem; text-align: left; font-weight: 600; border: 1px solid #e2e8f0; }
+        .prose td { padding: 0.6rem 0.8rem; border: 1px solid #e2e8f0; }
+        .prose tr:nth-child(even) { background-color: #f8fafc; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+        .prose blockquote { border-left: 4px solid #ea580c; padding-left: 1rem; color: #475569; background: #fff7ed; padding-top: 0.5rem; padding-bottom: 0.5rem; border-radius: 0 0.5rem 0.5rem 0; margin: 0.75rem 0; }
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex flex-col h-screen overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm flex-shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-orange-500/20">
+                <i class="fa-solid fa-compass text-xl"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight">TravelGenie</h1>
+                    <span class="bg-orange-100 text-orange-700 text-xs px-2.5 py-0.5 rounded-full font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-dharmachakra text-[10px]"></i> Full-Stack App
+                    </span>
+                </div>
+                <p class="text-xs text-slate-500">Autonomous Indian Domestic Travel & Booking System</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <button onclick="switchTab('chat')" id="tabBtn-chat" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-orange-600 shadow-sm transition flex items-center gap-1.5">
+                <i class="fa-solid fa-comments"></i> AI Planner
+            </button>
+            <button onclick="switchTab('trips')" id="tabBtn-trips" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-map-location-dot"></i> Saved Trips
+            </button>
+            <button onclick="switchTab('bookings')" id="tabBtn-bookings" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-ticket"></i> My Bookings
+            </button>
+            <button onclick="switchTab('tools')" id="tabBtn-tools" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt"></i> Live Tools
+            </button>
+        </nav>
+
+        <!-- Right Side Controls -->
+        <div class="flex items-center gap-3">
+            <a href="/docs" target="_blank" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-code text-indigo-500"></i> REST API Docs
+            </a>
+            <div class="flex items-center gap-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>SQLite DB Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- App Body -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Tab 1: AI Planner Chat -->
+        <div id="tabContent-chat" class="flex-1 flex overflow-hidden">
+            
+            <!-- Left Sidebar: Saved Planning Sessions -->
+            <div class="w-72 bg-slate-100 border-r border-slate-200 flex flex-col hidden md:flex">
+                <div class="p-3 border-b border-slate-200 flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Trips & Sessions</span>
+                    <button onclick="createNewSession()" class="text-xs bg-orange-600 hover:bg-orange-700 text-white px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1 shadow-sm transition">
+                        <i class="fa-solid fa-plus text-[10px]"></i> New Trip
+                    </button>
+                </div>
+                <div id="sessionsList" class="flex-1 overflow-y-auto p-2 space-y-1 text-xs">
+                    <!-- Session items injected via JS -->
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="flex-1 flex flex-col bg-white">
+                
+                <!-- Quick Chips Bar -->
+                <div class="px-6 py-2.5 bg-slate-50/80 border-b border-slate-200 flex items-center gap-2 overflow-x-auto text-xs whitespace-nowrap">
+                    <span class="text-slate-400 font-medium mr-1"><i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i> Quick Plans:</span>
+                    <button onclick="setPrompt('Plan a 4-day trip from Delhi to Goa for 2 travelers from 2026-10-15 to 2026-10-19 on a mid budget.')" class="px-3 py-1 bg-white border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 rounded-full text-slate-700 transition">
+                        🏖️ Delhi ➔ Goa (4 Days, Mid)
+                    </button>
+                    <button onclick="setPrompt('Plan a 3-day budget trip from Mumbai to Varanasi for 1 person from 2026-11-05 to 2026-11-08 on a cheap budget.')" class="px-3 py-1 bg-white border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 rounded-full text-slate-700 transition">
+                        🕉️ Mumbai ➔ Varanasi (Cheap)
+                    </button>
+                    <button onclick="setPrompt('Plan a 5-day luxury trip from Bangalore to Jaipur for 2 people on a premium budget from 2026-12-01 to 2026-12-06.')" class="px-3 py-1 bg-white border border-slate-200 hover:border-orange-300 hover:bg-orange-50/50 rounded-full text-slate-700 transition">
+                        👑 Bangalore ➔ Jaipur (5 Days, Premium)
+                    </button>
+                    <button onclick="openCheckoutModal()" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-semibold transition flex items-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-credit-card text-xs"></i> Book Now
+                    </button>
+                </div>
+
+                <!-- Messages Stream -->
+                <div id="chatContainer" class="flex-1 overflow-y-auto chat-scroll p-6 space-y-6">
+                    <!-- Welcome Agent Message -->
+                    <div class="flex gap-4 max-w-4xl">
+                        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm">
+                            <i class="fa-solid fa-sparkles text-sm"></i>
+                        </div>
+                        <div class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl rounded-tl-none p-5 text-sm leading-relaxed text-slate-800 shadow-sm">
+                            <div class="font-bold text-slate-900 mb-1 flex items-center gap-2">
+                                <span>TravelGenie Assistant</span>
+                                <span class="text-[10px] bg-orange-100 text-orange-800 font-semibold px-2 py-0.5 rounded-full">Full-Stack AI Agent</span>
+                            </div>
+                            <p class="mb-3">Namaste! 🙏 I am <strong>TravelGenie</strong>, your autonomous travel assistant for Indian domestic travel.</p>
+                            <p class="mb-2">I compare real multi-modal transport (Flights, IRCTC Trains, Buses), verified hotels, curated day-wise itineraries, and live meteorology. Tell me your plans:</p>
+                            <ul class="list-disc pl-5 space-y-1 text-slate-600 mb-3">
+                                <li><strong>Origin & Destination:</strong> (e.g., <em>Delhi to Goa</em>)</li>
+                                <li><strong>Dates & Days:</strong> (e.g., <em>4 days, Oct 15 - 19</em>)</li>
+                                <li><strong>Travelers:</strong> (e.g., <em>2 adults</em>)</li>
+                                <li><strong>Budget:</strong> (<em>Cheap</em>, <em>Mid</em>, or <em>Premium</em>)</li>
+                            </ul>
+                            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
+                                <i class="fa-solid fa-shield-halved text-amber-600 text-sm"></i>
+                                <span>Strict policy: All quotes are persisted to your database. Never charges without your explicit confirmation!</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Input Box -->
+                <div class="p-4 bg-white border-t border-slate-200">
+                    <form id="chatForm" onsubmit="sendMessage(event)" class="relative flex items-center">
+                        <textarea 
+                            id="chatInput"
+                            rows="1"
+                            placeholder="E.g., Plan a 4-day trip from Delhi to Goa for 2 travelers on mid budget..."
+                            class="w-full resize-none bg-slate-50 border border-slate-200 focus:border-orange-500 focus:bg-white focus:outline-none rounded-2xl pl-4 pr-24 py-3 text-sm text-slate-800 transition"
+                            onkeydown="if(event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); sendMessage(event); }"
+                        ></textarea>
+                        <button 
+                            type="submit" 
+                            id="sendBtn"
+                            class="absolute right-2 px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl text-sm font-semibold flex items-center gap-1.5 shadow-sm shadow-orange-500/30 transition"
+                        >
+                            <span>Send</span>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </form>
+                    <div class="flex items-center justify-between text-[11px] text-slate-400 mt-2 px-1">
+                        <span>Press Enter to send. Supports natural language travel planning and instant booking.</span>
+                        <span id="sessionStatus">Session: Active</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Tab 2: Saved Trips Explorer -->
+        <div id="tabContent-trips" class="flex-1 overflow-y-auto p-6 hidden bg-slate-50">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Saved Trip Plans</h2>
+                        <p class="text-xs text-slate-500">All planned itineraries and quotations stored in your database</p>
+                    </div>
+                    <button onclick="loadSavedTrips()" class="text-xs bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-slate-700 font-semibold shadow-sm transition">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
+                    </button>
+                </div>
+                <div id="tripsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Trip cards injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: My Bookings & Tickets -->
+        <div id="tabContent-bookings" class="flex-1 overflow-y-auto p-6 hidden bg-slate-50">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Confirmed Bookings & Vouchers</h2>
+                        <p class="text-xs text-slate-500">Your domestic travel reservations with official PNRs and vouchers</p>
+                    </div>
+                    <button onclick="loadBookings()" class="text-xs bg-white border border-slate-200 hover:bg-slate-50 px-3 py-1.5 rounded-lg text-slate-700 font-semibold shadow-sm transition">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
+                    </button>
+                </div>
+                <div id="bookingsList" class="space-y-4">
+                    <!-- Booking vouchers injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Direct Tool Sandbox -->
+        <div id="tabContent-tools" class="flex-1 overflow-y-auto p-6 hidden bg-slate-50">
+            <div class="max-w-4xl mx-auto space-y-6">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Live Tool Execution Sandbox</h2>
+                    <p class="text-xs text-slate-500">Inspect and run individual tools with live parameters</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Tool 1 -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-plane-departure text-indigo-500"></i> compare_transport
+                            </span>
+                            <span class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-mono font-bold">API</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3">Compares Flights, IRCTC Trains, and Intercity Buses.</p>
+                        <button onclick="testSandboxTool('transport')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-xl font-semibold transition">
+                            Run Test (Delhi ➔ Goa)
+                        </button>
+                    </div>
+
+                    <!-- Tool 2 -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-hotel text-amber-500"></i> search_hotels
+                            </span>
+                            <span class="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-mono font-bold">API</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3">Ranks verified hotels by cheap, mid, or premium budget.</p>
+                        <button onclick="testSandboxTool('hotels')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-xl font-semibold transition">
+                            Run Test (Goa Hotels, Cheap)
+                        </button>
+                    </div>
+
+                    <!-- Tool 3 -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-cloud-sun text-sky-500"></i> get_weather
+                            </span>
+                            <span class="text-[10px] bg-sky-50 text-sky-700 px-2 py-0.5 rounded font-mono font-bold">Live</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3">Live weather and packing advice via Open-Meteo.</p>
+                        <button onclick="testSandboxTool('weather')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-xl font-semibold transition">
+                            Run Test (Jaipur Weather)
+                        </button>
+                    </div>
+
+                    <!-- Tool 4 -->
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                <i class="fa-solid fa-landmark text-emerald-500"></i> get_place_info
+                            </span>
+                            <span class="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-mono font-bold">API</span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-3">Verified monument entry fees, timings, and insider tips.</p>
+                        <button onclick="testSandboxTool('place')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-xl font-semibold transition">
+                            Run Test (Hawa Mahal, Jaipur)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sandbox Output View -->
+                <div id="sandboxOutputCard" class="bg-slate-900 rounded-2xl p-4 shadow-lg text-emerald-400 font-mono text-xs hidden">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2 text-slate-400">
+                        <span id="sandboxTitle" class="font-bold">Result</span>
+                        <button onclick="document.getElementById('sandboxOutputCard').classList.add('hidden')" class="hover:text-white">✕</button>
+                    </div>
+                    <pre id="sandboxCode" class="whitespace-pre-wrap max-h-72 overflow-y-auto"></pre>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Interactive Checkout & Booking Modal -->
+    <div id="checkoutModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-orange-500 to-amber-600 p-6 text-white">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-orange-100">Instant Domestic Checkout</span>
+                    <button onclick="closeCheckoutModal()" class="text-white hover:text-orange-200 text-lg">✕</button>
+                </div>
+                <h3 class="text-xl font-bold">Confirm & Authorize Booking</h3>
+                <p class="text-xs text-orange-100">Secure ticket and hotel voucher issuance</p>
+            </div>
+
+            <!-- Form Body -->
+            <form id="checkoutForm" onsubmit="executeBooking(event)" class="p-6 space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Primary Traveler Name</label>
+                    <input type="text" id="travelerName" required value="Saurabh Sharma" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Mobile Phone (for SMS/PNR)</label>
+                        <input type="tel" id="travelerPhone" required value="+91-9876543210" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Email (for E-Tickets)</label>
+                        <input type="email" id="travelerEmail" required value="traveler@example.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Payment Method</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex items-center gap-1.5 p-2 border border-orange-300 bg-orange-50/50 rounded-xl cursor-pointer">
+                            <input type="radio" name="paymentMethod" value="UPI Instant Pay" checked class="text-orange-600">
+                            <span class="font-medium text-slate-800">UPI / QR</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 p-2 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="paymentMethod" value="Credit/Debit Card" class="text-orange-600">
+                            <span class="font-medium text-slate-800">Card</span>
+                        </label>
+                        <label class="flex items-center gap-1.5 p-2 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50">
+                            <input type="radio" name="paymentMethod" value="Net Banking" class="text-orange-600">
+                            <span class="font-medium text-slate-800">NetBanking</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Booking Mode:</span>
+                        <span class="font-semibold text-slate-800">Domestic Tour Package</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>Safety Guarantee:</span>
+                        <span class="text-emerald-700 font-semibold">Zero Cancellation Penalty</span>
+                    </div>
+                </div>
+
+                <button type="submit" id="payBtn" class="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-orange-500/25 transition">
+                    Authorize & Complete Reservation
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Client Scripts -->
+    <script>
+        let currentSessionId = localStorage.getItem('tg_session_id') || 'session_' + Math.random().toString(36).substring(2, 9);
+        localStorage.setItem('tg_session_id', currentSessionId);
+
+        // Tab Switcher
+        function switchTab(tabId) {
+            ['chat', 'trips', 'bookings', 'tools'].forEach(t => {
+                const btn = document.getElementById(`tabBtn-${t}`);
+                const content = document.getElementById(`tabContent-${t}`);
+                if (t === tabId) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-orange-600 shadow-sm transition flex items-center gap-1.5";
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5";
+                    content.classList.add('hidden');
+                }
+            });
+
+            if (tabId === 'trips') loadSavedTrips();
+            if (tabId === 'bookings') loadBookings();
+        }
+
+        // Sessions Management
+        async function loadSessions() {
+            try {
+                const res = await fetch('/api/sessions');
+                const list = await res.json();
+                const container = document.getElementById('sessionsList');
+                container.innerHTML = '';
+                list.forEach(s => {
+                    const isActive = s.id === currentSessionId;
+                    const el = document.createElement('div');
+                    el.className = `p-2.5 rounded-xl cursor-pointer flex items-center justify-between transition ${isActive ? 'bg-orange-500 text-white font-semibold' : 'bg-white hover:bg-slate-200 text-slate-700'}`;
+                    el.innerHTML = `
+                        <div onclick="selectSession('${s.id}')" class="flex-1 truncate pr-2">
+                            <i class="fa-solid fa-map-pin mr-1 text-[10px]"></i> ${s.title}
+                        </div>
+                        <button onclick="deleteSession('${s.id}')" class="${isActive ? 'text-orange-200 hover:text-white' : 'text-slate-400 hover:text-red-500'}">✕</button>
+                    `;
+                    container.appendChild(el);
+                });
+            } catch (e) {
+                console.error("Could not load sessions", e);
+            }
+        }
+
+        function createNewSession() {
+            currentSessionId = 'session_' + Math.random().toString(36).substring(2, 9);
+            localStorage.setItem('tg_session_id', currentSessionId);
+            document.getElementById('chatContainer').innerHTML = `
+                <div class="flex gap-4 max-w-4xl">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm">
+                        <i class="fa-solid fa-sparkles text-sm"></i>
+                    </div>
+                    <div class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl rounded-tl-none p-5 text-sm leading-relaxed text-slate-800 shadow-sm">
+                        <p class="font-bold text-slate-900 mb-1">New Planning Session Started!</p>
+                        <p class="text-slate-600">Tell me your desired destination, origin, travel dates, and budget to build a complete itinerary.</p>
+                    </div>
+                </div>
+            `;
+            loadSessions();
+        }
+
+        async function selectSession(sid) {
+            currentSessionId = sid;
+            localStorage.setItem('tg_session_id', sid);
+            loadSessions();
+            
+            // Load messages for session
+            try {
+                const res = await fetch(`/api/sessions/${sid}/messages`);
+                const msgs = await res.json();
+                const container = document.getElementById('chatContainer');
+                container.innerHTML = '';
+                msgs.forEach(m => {
+                    if (m.role === 'user') appendUserMessage(m.content);
+                    else if (m.role === 'assistant') appendAgentMessage(m.content, 'TravelGenie');
+                });
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteSession(sid) {
+            await fetch(`/api/sessions/${sid}`, { method: 'DELETE' });
+            if (currentSessionId === sid) createNewSession();
+            else loadSessions();
+        }
+
+        // Chat flow
+        function setPrompt(text) {
+            const input = document.getElementById('chatInput');
+            input.value = text;
+            input.focus();
+        }
+
+        async function sendMessage(e) {
+            if (e) e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendUserMessage(text);
+            input.value = '';
+
+            const loadingId = appendLoadingMessage();
+            const container = document.getElementById('chatContainer');
+            container.scrollTop = container.scrollHeight;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: text, session_id: currentSessionId })
+                });
+                const data = await res.json();
+                removeLoadingMessage(loadingId);
+                appendAgentMessage(data.reply, data.provider);
+                loadSessions(); // refresh title
+            } catch (err) {
+                removeLoadingMessage(loadingId);
+                appendAgentMessage("⚠️ An error occurred while communicating with TravelGenie: " + err.message);
+            }
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function appendUserMessage(text) {
+            const container = document.getElementById('chatContainer');
+            const html = `
+                <div class="flex gap-4 justify-end max-w-4xl ml-auto">
+                    <div class="bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-2xl rounded-tr-none p-4 text-sm shadow-sm max-w-xl">
+                        ${text}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        function appendLoadingMessage() {
+            const id = 'loading_' + Date.now();
+            const container = document.getElementById('chatContainer');
+            const html = `
+                <div id="${id}" class="flex gap-4 max-w-4xl">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm">
+                        <i class="fa-solid fa-spinner animate-spin text-sm"></i>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl rounded-tl-none p-4 text-sm text-slate-500 flex items-center gap-2">
+                        <span>TravelGenie is querying live transport, hotels, and weather...</span>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            return id;
+        }
+
+        function removeLoadingMessage(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        function appendAgentMessage(markdownText, provider) {
+            const container = document.getElementById('chatContainer');
+            const parsedHtml = marked.parse(markdownText);
+            const provBadge = provider ? `<span class="text-[10px] bg-slate-100 text-slate-600 font-mono px-2 py-0.5 rounded-full">${provider}</span>` : '';
+
+            const html = `
+                <div class="flex gap-4 max-w-4xl">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center text-white flex-shrink-0 shadow-sm mt-1">
+                        <i class="fa-solid fa-sparkles text-sm"></i>
+                    </div>
+                    <div class="flex-1 bg-white border border-slate-200 rounded-2xl rounded-tl-none p-5 text-sm leading-relaxed text-slate-800 shadow-sm prose max-w-none">
+                        <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+                            <span class="font-bold text-slate-900 flex items-center gap-1.5">
+                                TravelGenie Plan
+                            </span>
+                            ${provBadge}
+                        </div>
+                        ${parsedHtml}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        // Checkout Modal Functions
+        function openCheckoutModal() {
+            document.getElementById('checkoutModal').classList.remove('hidden');
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').classList.add('hidden');
+        }
+
+        async function executeBooking(e) {
+            e.preventDefault();
+            const btn = document.getElementById('payBtn');
+            btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Authorizing...`;
+            btn.disabled = true;
+
+            const name = document.getElementById('travelerName').value;
+            const phone = document.getElementById('travelerPhone').value;
+            const email = document.getElementById('travelerEmail').value;
+            const method = document.querySelector('input[name="paymentMethod"]:checked').value;
+
+            // Send booking request through chat
+            const msg = `Confirm and proceed with booking for traveler ${name}, phone ${phone}, email ${email}, payment via ${method}`;
+            closeCheckoutModal();
+            btn.innerHTML = `Authorize & Complete Reservation`;
+            btn.disabled = false;
+
+            setPrompt(msg);
+            await sendMessage();
+
+            // Trigger celebration confetti
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Saved Trips Tab
+        async function loadSavedTrips() {
+            const container = document.getElementById('tripsGrid');
+            container.innerHTML = '<div class="col-span-3 text-center py-10 text-slate-400">Loading saved trips...</div>';
+            try {
+                const res = await fetch('/api/trips');
+                const trips = await res.json();
+                if (trips.length === 0) {
+                    container.innerHTML = '<div class="col-span-3 text-center py-12 text-slate-400">No saved trips yet. Start planning in the AI Planner tab!</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                trips.forEach(t => {
+                    const el = document.createElement('div');
+                    el.className = "bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition flex flex-col justify-between";
+                    el.innerHTML = `
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-bold text-orange-600 uppercase tracking-wider">${t.duration_days} Days Tour</span>
+                                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-medium capitalize">${t.budget_preference}</span>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-900 mb-1">${t.origin} ➔ ${t.destination}</h3>
+                            <p class="text-xs text-slate-500 mb-4">${t.start_date} to ${t.end_date} · ${t.travelers} Traveler(s)</p>
+                            <div class="text-lg font-extrabold text-slate-900 mb-4">₹${Math.round(t.total_cost_inr).toLocaleString()}</div>
+                        </div>
+                        <button onclick="selectSession('${t.session_id}'); switchTab('chat');" class="w-full py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-semibold rounded-xl transition text-center">
+                            Open in Planner
+                        </button>
+                    `;
+                    container.appendChild(el);
+                });
+            } catch (e) {
+                container.innerHTML = `<div class="col-span-3 text-red-500 text-center py-6">Failed to load trips: ${e.message}</div>`;
+            }
+        }
+
+        // My Bookings Tab
+        async function loadBookings() {
+            const container = document.getElementById('bookingsList');
+            container.innerHTML = '<div class="text-center py-10 text-slate-400">Loading bookings...</div>';
+            try {
+                const res = await fetch('/api/bookings');
+                const bookings = await res.json();
+                if (bookings.length === 0) {
+                    container.innerHTML = '<div class="text-center py-12 text-slate-400">No bookings found. Confirm a trip plan to generate official vouchers!</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                bookings.forEach(b => {
+                    const el = document.createElement('div');
+                    el.className = "bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4";
+                    el.innerHTML = `
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">${b.payment_status}</span>
+                                <span class="text-xs font-mono text-slate-500">ID: ${b.id}</span>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-900">${b.transport_mode}: ${b.transport_provider} (PNR: ${b.transport_pnr})</h3>
+                            <p class="text-xs text-slate-600">Hotel: <strong>${b.hotel_name}</strong> · Code: <code>${b.hotel_confirmation}</code></p>
+                            <p class="text-xs text-slate-400">Lead: ${b.lead_name} (${b.lead_phone}) · Ref: ${b.transaction_reference}</p>
+                        </div>
+                        <div class="text-right flex md:flex-col items-center md:items-end justify-between">
+                            <div class="text-lg font-black text-slate-900 mb-1">₹${Math.round(b.total_amount_inr).toLocaleString()}</div>
+                            <button onclick="window.print()" class="text-xs bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-xl font-semibold shadow-sm transition">
+                                <i class="fa-solid fa-print mr-1"></i> Print Voucher
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(el);
+                });
+            } catch (e) {
+                container.innerHTML = `<div class="text-red-500 text-center py-6">Failed to load bookings: ${e.message}</div>`;
+            }
+        }
+
+        // Sandbox Tool Runner
+        async function testSandboxTool(toolName) {
+            const card = document.getElementById('sandboxOutputCard');
+            const title = document.getElementById('sandboxTitle');
+            const code = document.getElementById('sandboxCode');
+            card.classList.remove('hidden');
+            title.innerText = `Running ${toolName}...`;
+            code.innerText = "Executing tool...";
+
+            let url = '', payload = {};
+            if (toolName === 'transport') {
+                url = '/api/tools/compare_transport';
+                payload = { origin: 'Delhi', destination: 'Goa', date: '2026-10-15', travelers: 2 };
+            } else if (toolName === 'hotels') {
+                url = '/api/tools/search_hotels';
+                payload = { city: 'Goa', checkin_date: '2026-10-15', checkout_date: '2026-10-19', guests: 2, budget_preference: 'cheap' };
+            } else if (toolName === 'weather') {
+                url = '/api/tools/get_weather';
+                payload = { city: 'Jaipur' };
+            } else if (toolName === 'place') {
+                url = '/api/tools/get_place_info';
+                payload = { place_name: 'Hawa Mahal', city: 'Jaipur' };
+            }
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                title.innerText = `${toolName} Output:`;
+                code.innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                code.innerText = "Error: " + err.message;
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSessions();
+        });
+    </script>
+</body>
+</html>
