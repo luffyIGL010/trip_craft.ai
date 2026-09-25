@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TravelGenie – Login</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      width: 100%;
+      max-width: 420px;
+      padding: 2.5rem 2rem;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .logo h1 {
+      font-size: 1.8rem;
+      color: #1a73e8;
+      font-weight: 700;
+    }
+    .logo p {
+      color: #666;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 1rem 0;
+      color: #aaa;
+      font-size: 0.8rem;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-bottom: 0.75rem;
+    }
+    .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .btn-google { background: #fff; color: #444; border: 1.5px solid #dadce0; }
+    .btn-google img { width: 20px; }
+    .btn-phone { background: #34a853; color: #fff; }
+    .btn-email-toggle { background: #f1f3f4; color: #333; border: 1.5px solid #dadce0; }
+    .btn-primary { background: #1a73e8; color: #fff; }
+    .btn-outline { background: transparent; color: #1a73e8; border: 1.5px solid #1a73e8; }
+
+    .input-group { margin-bottom: 0.75rem; }
+    .input-group label { font-size: 0.82rem; color: #555; font-weight: 600; display: block; margin-bottom: 4px; }
+    .input-group input {
+      width: 100%;
+      padding: 0.65rem 0.85rem;
+      border: 1.5px solid #dadce0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus { border-color: #1a73e8; }
+
+    .phone-row { display: flex; gap: 8px; }
+    .phone-prefix {
+      padding: 0.65rem 0.75rem;
+      border: 1.5px solid #dadce0;
+      border-radius: 8px;
+      font-weight: 600;
+      color: #333;
+      background: #f8f8f8;
+      flex-shrink: 0;
+    }
+    .phone-row input { flex: 1; }
+
+    .section { display: none; margin-top: 0.5rem; }
+    .section.active { display: block; }
+
+    .tabs { display: flex; border-bottom: 2px solid #e0e0e0; margin-bottom: 1rem; }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 0.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #888;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+    .tab.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .error-msg {
+      color: #d93025;
+      font-size: 0.82rem;
+      margin-top: 6px;
+      min-height: 18px;
+    }
+    .success-msg {
+      color: #188038;
+      font-size: 0.82rem;
+      margin-top: 6px;
+    }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #recaptcha-container { margin: 4px 0; }
+
+    .otp-section { display: none; margin-top: 0.75rem; }
+    .otp-section.visible { display: block; }
+
+    .resend-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 4px;
+    }
+    .resend-btn {
+      background: none;
+      border: none;
+      color: #1a73e8;
+      font-size: 0.82rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .resend-btn:disabled { color: #aaa; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <h1>✈ TravelGenie</h1>
+    <p>Your AI travel planning assistant for India</p>
+  </div>
+
+  <!-- Global error -->
+  <div id="globalError" class="error-msg"></div>
+
+  <!-- Google -->
+  <button class="btn btn-google" id="btnGoogle">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+    Continue with Google
+  </button>
+
+  <div class="divider">or</div>
+
+  <!-- Toggle Phone / Email -->
+  <button class="btn btn-phone" id="btnTogglePhone">📱 Continue with Phone</button>
+  <button class="btn btn-email-toggle" id="btnToggleEmail">✉ Login / Register with Email</button>
+
+  <!-- Phone Section -->
+  <div class="section" id="phoneSection">
+    <div class="input-group">
+      <label>Mobile Number</label>
+      <div class="phone-row">
+        <span class="phone-prefix">+91</span>
+        <input type="tel" id="phoneNumber" placeholder="9876543210" maxlength="10" />
+      </div>
+    </div>
+    <div id="recaptcha-container"></div>
+    <button class="btn btn-phone" id="btnSendOtp">Send OTP</button>
+    <div class="error-msg" id="phoneError"></div>
+
+    <div class="otp-section" id="otpSection">
+      <div class="input-group">
+        <label>Enter OTP</label>
+        <input type="text" id="otpCode" placeholder="6-digit OTP" maxlength="6" />
+      </div>
+      <div class="resend-row">
+        <button class="resend-btn" id="btnResend" disabled>Resend OTP (<span id="cooldown">30</span>s)</button>
+      </div>
+      <button class="btn btn-primary" id="btnVerifyOtp">Verify OTP</button>
+      <div class="error-msg" id="otpError"></div>
+    </div>
+  </div>
+
+  <!-- Email Section -->
+  <div class="section" id="emailSection">
+    <div class="tabs">
+      <div class="tab active" data-tab="login">Login</div>
+      <div class="tab" data-tab="register">Register</div>
+    </div>
+
+    <!-- Login tab -->
+    <div class="tab-content active" id="tab-login">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" />
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Password" />
+      </div>
+      <button class="btn btn-primary" id="btnLogin">Login</button>
+      <div class="error-msg" id="loginError"></div>
+    </div>
+
+    <!-- Register tab -->
+    <div class="tab-content" id="tab-register">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="you@example.com" />
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Min 6 characters" />
+      </div>
+      <div class="input-group">
+        <label>Confirm Password</label>
+        <input type="password" id="regConfirm" placeholder="Repeat password" />
+      </div>
+      <button class="btn btn-primary" id="btnRegister">Create Account</button>
+      <div class="error-msg" id="registerError"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase JS SDK (ESM) -->
+<script type="module">
+  import { initializeApp }                       from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    RecaptchaVerifier,
+    signInWithPhoneNumber,
+  } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+
+  // ── Firebase init ───────────────────────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey:            'AIzaSyAVAHJ55vJB8BTyJYXgWKmd-6b9ZJmIuI8',
+    authDomain:        'authentication-ae570.firebaseapp.com',
+    projectId:         'authentication-ae570',
+    storageBucket:     'authentication-ae570.firebasestorage.app',
+    messagingSenderId: '210543750432',
+    appId:             '1:210543750432:web:31e720fc949e10f87b7b45',
+    measurementId:     'G-ZPK82TBCRW',
+  };
+  const fbApp = initializeApp(firebaseConfig);
+  const auth  = getAuth(fbApp);
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function showErr(id, msg) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = msg || '';
+  }
+  function setLoading(btn, loading) {
+    btn.disabled = loading;
+    btn.dataset.label = btn.dataset.label || btn.textContent;
+    btn.innerHTML = loading
+      ? `<span class="spinner"></span> Please wait…`
+      : btn.dataset.label;
+  }
+
+  async function sendTokenToBackend(idToken) {
+    const resp = await fetch('/auth/login', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ idToken }),
+    });
+    if (resp.ok) {
+      window.location.href = '/dashboard';
+    } else {
+      const data = await resp.json().catch(() => ({}));
+      showErr('globalError', data.detail || 'Login failed. Please try again.');
+    }
+  }
+
+  // ── Google Sign-In ──────────────────────────────────────────────────────────
+  document.getElementById('btnGoogle').addEventListener('click', async () => {
+    const btn = document.getElementById('btnGoogle');
+    showErr('globalError', '');
+    setLoading(btn, true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result   = await signInWithPopup(auth, provider);
+      const idToken  = await result.user.getIdToken();
+      await sendTokenToBackend(idToken);
+    } catch (e) {
+      if (e.code !== 'auth/popup-closed-by-user') {
+        showErr('globalError', e.message);
+      }
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
+  // ── Section toggles ─────────────────────────────────────────────────────────
+  let recaptchaReady = false;
+
+  document.getElementById('btnTogglePhone').addEventListener('click', () => {
+    document.getElementById('phoneSection').classList.toggle('active');
+    document.getElementById('emailSection').classList.remove('active');
+    // Lazy-init reCAPTCHA the first time the phone section opens
+    if (!recaptchaReady) {
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(
+          auth,                        // ← auth is FIRST argument in SDK v9/v10
+          'recaptcha-container',
+          { size: 'invisible' }
+        );
+        recaptchaReady = true;
+      } catch (e) {
+        showErr('phoneError', 'reCAPTCHA init failed: ' + e.message);
+      }
+    }
+  });
+
+  document.getElementById('btnToggleEmail').addEventListener('click', () => {
+    document.getElementById('emailSection').classList.toggle('active');
+    document.getElementById('phoneSection').classList.remove('active');
+  });
+
+  // ── Tab switching (Login / Register) ────────────────────────────────────────
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ── Phone OTP ───────────────────────────────────────────────────────────────
+  let confirmationResult = null;
+  let cooldownTimer      = null;
+
+  document.getElementById('btnSendOtp').addEventListener('click', async () => {
+    const btn   = document.getElementById('btnSendOtp');
+    const raw   = document.getElementById('phoneNumber').value.trim();
+    const phone = '+91' + raw.replace(/\D/g, '');
+    showErr('phoneError', '');
+
+    if (raw.replace(/\D/g, '').length !== 10) {
+      showErr('phoneError', 'Enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (!recaptchaReady) {
+      showErr('phoneError', 'reCAPTCHA not ready. Open the phone section first.');
+      return;
+    }
+    setLoading(btn, true);
+    try {
+      confirmationResult = await signInWithPhoneNumber(auth, phone, window.recaptchaVerifier);
+      document.getElementById('otpSection').classList.add('visible');
+      startCooldown();
+    } catch (e) {
+      showErr('phoneError', e.message);
+      // Reset reCAPTCHA so next attempt works
+      window.recaptchaVerifier.clear();
+      recaptchaReady = false;
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
+  document.getElementById('btnVerifyOtp').addEventListener('click', async () => {
+    const btn  = document.getElementById('btnVerifyOtp');
+    const code = document.getElementById('otpCode').value.trim();
+    showErr('otpError', '');
+    if (!confirmationResult) { showErr('otpError', 'Request OTP first.'); return; }
+    if (code.length !== 6)   { showErr('otpError', 'Enter the 6-digit OTP.'); return; }
+    setLoading(btn, true);
+    try {
+      const result  = await confirmationResult.confirm(code);
+      const idToken = await result.user.getIdToken();
+      await sendTokenToBackend(idToken);
+    } catch (e) {
+      showErr('otpError', e.message);
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
+  function startCooldown(seconds = 30) {
+    const btn      = document.getElementById('btnResend');
+    const display  = document.getElementById('cooldown');
+    let   remaining = seconds;
+    btn.disabled   = true;
+    clearInterval(cooldownTimer);
+    cooldownTimer = setInterval(() => {
+      remaining--;
+      display.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(cooldownTimer);
+        btn.disabled     = false;
+        btn.textContent  = 'Resend OTP';
+      }
+    }, 1000);
+  }
+
+  document.getElementById('btnResend').addEventListener('click', async () => {
+    document.getElementById('btnSendOtp').click();
+  });
+
+  // ── Email/Password Login ────────────────────────────────────────────────────
+  document.getElementById('btnLogin').addEventListener('click', async () => {
+    const btn      = document.getElementById('btnLogin');
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    showErr('loginError', '');
+    if (!email || !password) { showErr('loginError', 'Fill in email and password.'); return; }
+    setLoading(btn, true);
+    try {
+      const cred    = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await cred.user.getIdToken();
+      await sendTokenToBackend(idToken);
+    } catch (e) {
+      showErr('loginError', e.message);
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+
+  // ── Email/Password Register ─────────────────────────────────────────────────
+  document.getElementById('btnRegister').addEventListener('click', async () => {
+    const btn      = document.getElementById('btnRegister');
+    const email    = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirm  = document.getElementById('regConfirm').value;
+    showErr('registerError', '');
+    if (password !== confirm) { showErr('registerError', 'Passwords do not match.'); return; }
+    if (password.length < 6)  { showErr('registerError', 'Password must be at least 6 characters.'); return; }
+    setLoading(btn, true);
+    try {
+      const cred    = await createUserWithEmailAndPassword(auth, email, password);
+      const idToken = await cred.user.getIdToken();
+      await sendTokenToBackend(idToken);
+    } catch (e) {
+      showErr('registerError', e.message);
+    } finally {
+      setLoading(btn, false);
+    }
+  });
+</script>
+</body>
+</html>
